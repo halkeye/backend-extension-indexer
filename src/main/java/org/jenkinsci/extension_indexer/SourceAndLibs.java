@@ -122,7 +122,11 @@ public class SourceAndLibs implements Closeable {
 
         File srcdir = new File(tempDir,"src");
         File libdir = new File(tempDir,"lib");
-        FileUtils.unzip(artifact.resolveSources(), srcdir);
+        try {
+            FileUtils.unzip(artifact.repository.resolve(artifact.artifact,"jar","sources"), srcdir);
+        } catch (Error e) {
+            throw (IOException)new IOException("Failed to resolve artifact "+artifact+ " sources jar").initCause(e);
+        }
 
         File pom = artifact.resolvePOM();
         FileUtils.copyFile(pom, new File(srcdir, "pom.xml"));

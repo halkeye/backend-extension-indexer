@@ -5,12 +5,13 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import io.jenkins.update_center.HudsonWar;
+
+import io.jenkins.update_center.DefaultMavenRepositoryBuilder;
+import io.jenkins.update_center.JenkinsWar;
 import io.jenkins.update_center.MavenArtifact;
 import io.jenkins.update_center.MavenRepository;
-import io.jenkins.update_center.MavenRepositoryImpl;
+import io.jenkins.update_center.wrappers.MavenRepositoryWrapper;
 import io.jenkins.update_center.Plugin;
-import io.jenkins.update_center.PluginHistory;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -63,7 +64,7 @@ public class ExtensionPointListGenerator {
 
     @Option(name="-core",usage="Core version to use. If not set, default to newest")
     public String coreVersion;
-    
+
     @Option(name="-plugins",usage="Collect *.hpi/jpi into this directory")
     public File plugins;
 
@@ -206,7 +207,7 @@ public class ExtensionPointListGenerator {
                 return displayName;
             }
             displayName = StringUtils.removeStartIgnoreCase(displayName, "Jenkins ");
-            displayName = StringUtils.removeStartIgnoreCase(displayName, "Hudson ");
+            displayName = StringUtils.removeStartIgnoreCase(displayName, "Jenkins ");
             displayName = StringUtils.removeEndIgnoreCase(displayName, " for Jenkins");
             displayName = StringUtils.removeEndIgnoreCase(displayName, " Plugin");
             displayName = StringUtils.removeEndIgnoreCase(displayName, " Plug-In");
@@ -300,30 +301,7 @@ public class ExtensionPointListGenerator {
         if (asciidocOutputDir ==null && sorcererDir==null && jsonFile==null && plugins ==null)
             throw new IllegalStateException("Nothing to do. Either -adoc, -json, -sorcerer, or -pipeline is needed");
 
-        MavenRepositoryImpl r = new MavenRepositoryImpl();
-        r.addRemoteRepository("public",
-                new URL("http://repo.jenkins-ci.org/public/"));
-
-        HudsonWar war;
-        if (coreVersion == null) {
-            war = r.getHudsonWar().firstEntry().getValue();
-        } else {
-            war = r.getHudsonWar().get(new VersionNumber(coreVersion));
-        }
-        discover(addModule(new Module(war.getCoreArtifact(),"http://github.com/jenkinsci/jenkins/","Jenkins Core") {
-            @Override
-            String getFormattedLink() {
-                // TODO different target
-                return "link:https://github.com/jenkinsci/jenkins/[Jenkins Core]";
-            }
-
-            @Override
-            String getUrlName() {
-                return JENKINS_CORE_URL_NAME;
-            }
-        }));
-
-        processPlugins(r);
+        processPlugins(createRepository());
 
         if (jsonFile!=null) {
             JSONObject all = new JSONObject();
@@ -357,14 +335,10 @@ public class ExtensionPointListGenerator {
         }
     }
 
-    private MavenRepositoryImpl createRepository() throws Exception {
-        MavenRepositoryImpl r = new MavenRepositoryImpl();
-        r.addRemoteRepository("java.net2",
-                new File("updates.jenkins-ci.org"),
-                new URL("http://maven.glassfish.org/content/groups/public/"));
-        return r;
+    private MavenRepository createRepository() throws Exception {
+        return DefaultMavenRepositoryBuilder.getInstance();
     }
-    
+
     /**
      * Walks over the plugins, record {@link #modules} and call {@link #discover(Module)}.
      */
@@ -372,11 +346,11 @@ public class ExtensionPointListGenerator {
         ExecutorService svc = Executors.newFixedThreadPool(1);
         try {
             Set<Future> futures = new HashSet<Future>();
-            for (final PluginHistory p : new ArrayList<PluginHistory>(r.listHudsonPlugins())/*.subList(0,200)*/) {
+            for (final Plugin p : new ArrayList<Plugin>(r.listJenkinsPlugins())/*.subList(0,200)*/) {
                 if (!args.isEmpty()) {
-                    if (!args.contains(p.artifactId))
+                    if (!args.contains(p.getArtifactId()))
                         continue;   // skip
-                } else if ("python-wrapper".equals(p.artifactId)) {
+                } else if ("python-wrapper".equals(p.getArtifactId())) {
                     // python-wrapper does not have extension points but just wrappers to help python plugins use extension points
                     // see https://issues.jenkins-ci.org/browse/INFRA-516
                     continue;   // skip them to remove noise
@@ -384,27 +358,27 @@ public class ExtensionPointListGenerator {
                 futures.add(svc.submit(new Runnable() {
                     public void run() {
                         try {
-                            System.out.println(p.artifactId);
-                            if (asciidocOutputDir !=null || jsonFile!=null) {
-                                Plugin pi = new Plugin(p);
-                                discover(addModule(new Module(p.latest(), pi.getPluginUrl(), pi.getName()) {
+                            System.out.println(p.getArtifactId());
+                            if (asciidocOutputDir != null || jsonFile != null) {
+                                Plugin pi = new Plugin(p.getArtifactId());
+                                discover(addModule(new Module(p.getLatest(), pi.getLatest().getPluginUrl(), pi.getLatest().getName()) {
                                     @Override
                                     String getFormattedLink() {
-                                        return "plugin:" + artifact.artifact.artifactId + "[" + displayName + "]";
+                                        return "plugin:" + p.getArtifactId() + "[" + displayName + "]";
                                     }
 
                                     @Override
                                     String getUrlName() {
-                                        return artifact.artifact.artifactId;
+                                        return p.getArtifactId();
                                     }
                                 }));
                             }
                             if (plugins!=null) {
-                                File hpi = p.latest().resolve();
+                                File hpi = p.getLatest().resolve();
                                 FileUtils.copyFile(hpi, new File(plugins, hpi.getName()));
                             }
                         } catch (Exception e) {
-                            System.err.println("Failed to process "+p.artifactId);
+                            System.err.println("Failed to process "+p.getArtifactId());
                             // TODO record problem with this plugin so we can report on it
                             e.printStackTrace();
                         }
