@@ -9,7 +9,7 @@ import com.sun.source.util.Trees;
 import net.sf.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
-import org.jvnet.hudson.update_center.MavenArtifact;
+import io.jenkins.update_center.MavenArtifact;
 
 import javax.lang.model.element.TypeElement;
 import java.io.File;

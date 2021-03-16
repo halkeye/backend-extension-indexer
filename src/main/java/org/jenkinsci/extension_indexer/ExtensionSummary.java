@@ -3,7 +3,7 @@ package org.jenkinsci.extension_indexer;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.extension_indexer.ExtensionPointListGenerator.Family;
-import org.jvnet.hudson.update_center.MavenArtifact;
+import io.jenkins.update_center.MavenArtifact;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;

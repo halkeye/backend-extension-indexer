@@ -57,7 +57,7 @@
     <dependency>
       <groupId>org.jenkins-ci</groupId>
       <artifactId>update-center2</artifactId>
-      <version>2.0-20170517.085221-1</version>
+      <version>3.4.6</version>
     </dependency>
     <dependency>
       <groupId>org.kohsuke.sorcerer</groupId>

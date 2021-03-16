@@ -1,6 +1,6 @@
 package org.jenkinsci.extension_indexer;
 
-import org.jvnet.hudson.update_center.MavenArtifact;
+import io.jenkins.update_center.MavenArtifact;
 import org.jvnet.sorcerer.Analyzer;
 import org.jvnet.sorcerer.Dependency;
 import org.jvnet.sorcerer.FrameSetGenerator;

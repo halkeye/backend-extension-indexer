@@ -4,7 +4,7 @@ import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 import net.sf.json.JSONObject;
-import org.jvnet.hudson.update_center.MavenArtifact;
+import io.jenkins.update_center.MavenArtifact;
 
 import javax.lang.model.element.TypeElement;
 import java.util.Map;

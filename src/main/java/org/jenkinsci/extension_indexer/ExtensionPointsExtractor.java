@@ -9,7 +9,7 @@ import com.sun.source.util.Trees;
 import com.sun.tools.javac.api.JavacTool;
 import com.sun.tools.javac.file.ZipFileIndexCache;
 import org.apache.commons.io.FilenameUtils;
-import org.jvnet.hudson.update_center.MavenArtifact;
+import io.jenkins.update_center.MavenArtifact;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.NoType;

@@ -2,7 +2,7 @@ package org.jenkinsci.extension_indexer;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.jvnet.hudson.update_center.MavenArtifact;
+import io.jenkins.update_center.MavenArtifact;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
